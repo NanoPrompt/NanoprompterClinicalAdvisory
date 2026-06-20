@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nanoprompter — Clinical Root-Cause Advisory</title>
+<style>
+  :root{
+    --ink:#10221f;
+    --paper:#eef3f1;
+    --panel:#ffffff;
+    --line:#cdd9d4;
+    --teal:#0b6e63;
+    --teal-deep:#073e38;
+    --amber:#c2780a;
+    --red:#a8341f;
+    --muted:#5b6f6a;
+    --mono: 'IBM Plex Mono', 'SFMono-Regular', Menlo, monospace;
+    --serif: 'Source Serif 4', Georgia, serif;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,500;8..60,700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  /* DISCLAIMER BANNER */
+  .banner{
+    background:var(--teal-deep);
+    color:#dff0ec;
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.03em;
+    padding:9px 24px;
+    text-align:center;
+  }
+  .banner strong{color:#ffd98a;}
+
+  header{
+    padding:28px 32px 20px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand .mark{
+    font-family:var(--serif);
+    font-weight:700;
+    font-size:26px;
+    color:var(--teal-deep);
+  }
+  .brand .tag{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--muted);
+    border-left:1px solid var(--line);
+    padding-left:10px;
+  }
+  nav{display:flex;gap:4px;}
+  nav button{
+    font-family:var(--sans);
+    font-size:13.5px;
+    font-weight:600;
+    background:none;
+    border:1px solid transparent;
+    color:var(--muted);
+    padding:8px 14px;
+    border-radius:6px;
+    cursor:pointer;
+  }
+  nav button.active{
+    background:var(--teal-deep);
+    color:#fff;
+  }
+  nav button:not(.active):hover{
+    background:#dfe9e6;
+    color:var(--ink);
+  }
+
+  main{max-width:1080px;margin:0 auto;padding:32px;}
+  .view{display:none;}
+  .view.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+  h1.page-title{
+    font-family:var(--serif);
+    font-size:26px;
+    margin:0 0 4px;
+  }
+  .page-sub{color:var(--muted);font-size:14px;margin:0 0 28px;}
+
+  /* ---- DASHBOARD ---- */
+  .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px;}
+  .stat{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px 18px;
+  }
+  .stat .n{font-family:var(--serif);font-size:28px;font-weight:700;}
+  .stat .l{font-size:12px;color:var(--muted);margin-top:2px;}
+  .stat.flag .n{color:var(--red);}
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:20px 22px;
+    margin-bottom:20px;
+  }
+  .panel h2{
+    font-family:var(--serif);
+    font-size:16px;
+    margin:0 0 14px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th{
+    text-align:left;
+    font-family:var(--mono);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:var(--muted);
+    border-bottom:1px solid var(--line);
+    padding:0 10px 8px;
+  }
+  td{padding:10px;border-bottom:1px solid #eef0ee;}
+  tr:last-child td{border-bottom:none;}
+  .pill{
+    display:inline-block;
+    font-size:11px;
+    font-weight:600;
+    padding:3px 9px;
+    border-radius:99px;
+  }
+  .pill.verified{background:#e1f1ec;color:var(--teal-deep);}
+  .pill.review{background:#fbe9d3;color:var(--amber);}
+  .pill.flagged{background:#fae0db;color:var(--red);}
+
+  /* ---- FORM ---- */
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+  .field.full{grid-column:1/-1;}
+  label{font-size:12.5px;font-weight:600;color:var(--teal-deep);}
+  input,select,textarea{
+    font-family:var(--sans);
+    font-size:14px;
+    padding:9px 11px;
+    border:1px solid var(--line);
+    border-radius:7px;
+    background:#fbfdfc;
+    color:var(--ink);
+  }
+  input:focus,select:focus,textarea:focus{
+    outline:2px solid var(--teal);
+    outline-offset:1px;
+    border-color:var(--teal);
+  }
+  textarea{resize:vertical;min-height:70px;}
+  .btn{
+    font-family:var(--sans);
+    font-weight:600;
+    font-size:14px;
+    background:var(--teal-deep);
+    color:#fff;
+    border:none;
+    padding:11px 20px;
+    border-radius:7px;
+    cursor:pointer;
+  }
+  .btn:hover{background:#0a534a;}
+  .btn.ghost{
+    background:none;
+    border:1px solid var(--line);
+    color:var(--muted);
+  }
+
+  .result{
+    margin-top:22px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    overflow:hidden;
+    display:none;
+  }
+  .result.show{display:block;animation:fade .3s ease;}
+  .result-head{
+    background:var(--teal-deep);
+    color:#fff;
+    padding:14px 20px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .result-head .conf{font-family:var(--mono);font-size:12px;background:rgba(255,255,255,.15);padding:4px 10px;border-radius:99px;}
+  .result-body{padding:18px 20px;background:var(--panel);}
+  .result-body h3{font-family:var(--serif);font-size:15px;margin:14px 0 6px;}
+  .result-body h3:first-child{margin-top:0;}
+  .result-body p{font-size:14px;line-height:1.55;margin:0 0 4px;color:#2c3b38;}
+  .citation{font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .review-strip{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    background:#fbf6ea;
+    border-top:1px solid var(--line);
+    padding:10px 20px;
+    font-size:12.5px;
+    color:var(--amber);
+  }
+
+  /* ---- Q&A ---- */
+  .chat{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:18px 20px;
+    min-height:340px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .msg{max-width:78%;font-size:14px;line-height:1.5;padding:11px 14px;border-radius:10px;}
+  .msg.user{align-self:flex-end;background:var(--teal-deep);color:#fff;border-bottom-right-radius:2px;}
+  .msg.bot{align-self:flex-start;background:#eef3f1;border:1px solid var(--line);border-bottom-left-radius:2px;}
+  .msg.bot .src{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:8px;}
+  .chat-input{display:flex;gap:10px;margin-top:14px;}
+  .chat-input input{flex:1;}
+
+  .disclaimer-foot{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--muted);
+    text-align:center;
+    padding:24px 20px 40px;
+  }
+</style>
+</head>
+<body>
+
+<div class="banner">⚠ Demo build — sample data only, no real patient information.</div>
+
+<header>
+  <div class="brand">
+    <span class="mark">Nanoprompter</span>
+    <span class="tag">CLINICAL ROOT-CAUSE ADVISORY</span>
+  </div>
+  <nav>
+    <button class="active" data-view="dashboard">Dashboard</button>
+    <button data-view="intake">New Case &amp; Diagnosis</button>
+    <button data-view="qa">AI Intelligence</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- DASHBOARD -->
+  <section class="view active" id="dashboard">
+    <h1 class="page-title">Department overview</h1>
+    <p class="page-sub">Internal Medicine, Ward 4</p>
+
+    <div class="stat-row">
+      <div class="stat"><div class="n">128</div><div class="l">Cases reviewed (30d)</div></div>
+      <div class="stat"><div class="n">96%</div><div class="l">Avg. verification confidence</div></div>
+      <div class="stat flag"><div class="n">7</div><div class="l">Flagged for SME review</div></div>
+      <div class="stat"><div class="n">3.1h</div><div class="l">Median time to verified advice</div></div>
+    </div>
+
+    <div class="panel">
+      <h2>Recent cases</h2>
+      <table>
+        <thead><tr><th>Case ID</th><th>Presenting issue</th><th>Suggested root cause</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>RX-1042</td><td>Elevated K⁺ post-ACEi titration</td><td>Concurrent spironolactone, additive hyperkalemia</td><td><span class="pill verified">Verified</span></td></tr>
+          <tr><td>RX-1041</td><td>Acute dyspnea, post-flight</td><td>Suspected PE secondary to DVT, hypercoagulable workup pending</td><td><span class="pill review">SME review</span></td></tr>
+          <tr><td>RX-1039</td><td>Lateral hip pain, point tender</td><td>Greater trochanteric pain syndrome</td><td><span class="pill verified">Verified</span></td></tr>
+          <tr><td>RX-1037</td><td>COPD, sudden O₂ desat + chest pain</td><td>Suspected secondary pneumothorax</td><td><span class="pill flagged">Flagged</span></td></tr>
+          <tr><td>RX-1035</td><td>Pre-op fasting question, gen. surgery</td><td>n/a — instructional handout request</td><td><span class="pill verified">Verified</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>How Nanoprompter works</h2>
+      <p style="font-size:13.5px;color:#3a4a46;line-height:1.6;margin:0;">
+        Suggested root causes are generated by a primary model, checked by a second independent reviewer model against approved clinical protocols, and routed to a human subject-matter expert for sign-off.
+      </p>
+    </div>
+  </section>
+
+  <!-- INTAKE FORM -->
+  <section class="view" id="intake">
+    <h1 class="page-title">New case &amp; diagnosis</h1>
+    <p class="page-sub">Enter presenting details to generate a draft root-cause suggestion and diagnosis, reviewed inline below.</p>
+
+    <div class="panel">
+      <div class="form-grid">
+        <div class="field"><label>Age</label><input type="number" id="age" placeholder="e.g. 68" value="67"></div>
+        <div class="field"><label>Sex</label>
+          <select id="sex"><option>Female</option><option selected>Male</option><option>Other / unspecified</option></select>
+        </div>
+        <div class="field full"><label>Relevant history</label>
+          <input type="text" id="history" value="COPD, 30 pack-year smoking history">
+        </div>
+        <div class="field full"><label>Presenting symptoms</label>
+          <textarea id="symptoms">Sudden shortness of breath and right-sided chest pain following a coughing fit; SpO2 84% on room air; decreased breath sounds on the right.</textarea>
+        </div>
+        <div class="field"><label>Vitals (optional)</label><input type="text" id="vitals" placeholder="BP, HR, RR, Temp" value="HR 118, RR 28, BP 128/82, Temp 37.0°C"></div>
+        <div class="field"><label>Department</label>
+          <select><option>Emergency</option><option selected>Internal Medicine</option><option>Pulmonology</option></select>
+        </div>
+      </div>
+      <button class="btn" onclick="runDemo()">Generate draft suggestion</button>
+      <button class="btn ghost" onclick="resetForm()" style="margin-left:8px;">Clear</button>
+    </div>
+
+    <div class="result" id="result">
+      <div class="result-head">
+        <span>Draft suggestion — RX-1052 (mock output)</span>
+        <span class="conf">Model confidence: 91%</span>
+      </div>
+      <div class="result-body">
+        <h3>Suggested root cause</h3>
+        <p>Findings are consistent with a spontaneous secondary pneumothorax, precipitated by a coughing episode in a patient with underlying COPD.</p>
+        <p class="citation">Pattern basis: acute pleuritic pain + sudden desaturation + unilateral decreased breath sounds, in a patient with bullous lung disease risk factors.</p>
+
+        <h3>Suggested immediate steps</h3>
+        <p>Supplemental oxygen, urgent upright chest X-ray to confirm and size the pneumothorax, and continuous pulse oximetry pending imaging.</p>
+
+        <h3>Differentials to rule out</h3>
+        <p>Pulmonary embolism, acute COPD exacerbation, myocardial ischemia.</p>
+      </div>
+      <div class="review-strip">⏳ Awaiting independent model verification + SME sign-off before this can be attached to a chart. Not actionable as-is.</div>
+    </div>
+  </section>
+
+  <!-- Q&A -->
+  <section class="view" id="qa">
+    <h1 class="page-title">AI Intelligence</h1>
+    <p class="page-sub">For staff use — ask about a case, upload a report for context, or download this conversation as a report.</p>
+
+    <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+      <input type="file" id="reportUpload" accept=".pdf,.doc,.docx,.txt,.csv" style="display:none" onchange="handleUpload(this)">
+      <button class="btn ghost" onclick="document.getElementById('reportUpload').click()">⇧ Upload report</button>
+      <button class="btn ghost" onclick="downloadReport()">⇩ Download report</button>
+      <span id="uploadStatus" style="align-self:center; font-size:12.5px; color:var(--muted);"></span>
+    </div>
+
+    <div class="chat" id="chatLog">
+      <div class="msg bot">Hi — ask about a case pattern, drug interaction, or protocol and I'll surface a draft answer with its supporting basis flagged for review.</div>
+    </div>
+    <div class="chat-input">
+      <input type="text" id="chatInput" placeholder="e.g. Why would potassium rise after adding spironolactone to an ACE inhibitor?">
+      <button class="btn" onclick="sendChat()">Ask</button>
+    </div>
+  </section>
+
+</main>
+
+
+
+<script>
+  document.querySelectorAll('nav button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      document.getElementById(b.dataset.view).classList.add('active');
+    });
+  });
+
+  function runDemo(){
+    document.getElementById('result').classList.add('show');
+    document.getElementById('result').scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+  function resetForm(){
+    document.getElementById('result').classList.remove('show');
+  }
+
+  const canned = [
+    {match:/potassium|spironolactone|aldosterone/i,
+     reply:"Spironolactone blocks aldosterone receptors in the distal nephron, reducing sodium reabsorption and potassium excretion. Combined with an ACE inhibitor (which already lowers aldosterone), this commonly produces additive hyperkalemia — routine potassium monitoring is recommended after starting or adjusting either drug.",
+     src:"Basis: pharmacology pattern match, mineralocorticoid receptor antagonism · Status: pending SME verification"},
+    {match:/pneumothorax|copd|chest pain/i,
+     reply:"In a COPD patient with sudden pleuritic chest pain and desaturation after a coughing fit, secondary spontaneous pneumothorax should be high on the differential alongside PE and exacerbation. Urgent chest imaging is the typical next step.",
+     src:"Basis: symptom cluster pattern match · Status: pending SME verification"},
+    {match:/hip|trochanteric|bursitis/i,
+     reply:"Lateral point tenderness, pain with side-lying, and a normal log-roll test point toward greater trochanteric pain syndrome rather than intra-articular hip pathology. First-line management is typically NSAIDs plus targeted physical therapy.",
+     src:"Basis: orthopedic exam pattern match · Status: pending SME verification"}
+  ];
+
+  function sendChat(){
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    if(!text) return;
+    const log = document.getElementById('chatLog');
+
+    const userMsg = document.createElement('div');
+    userMsg.className = 'msg user';
+    userMsg.textContent = text;
+    log.appendChild(userMsg);
+
+    let found = canned.find(c=>c.match.test(text));
+    const botMsg = document.createElement('div');
+    botMsg.className = 'msg bot';
+    if(found){
+      botMsg.innerHTML = found.reply + '<div class="src">' + found.src + '</div>';
+    } else {
+      botMsg.innerHTML = "This is a static demo, so I only have a few sample answers pre-loaded (try asking about potassium/spironolactone, COPD chest pain, or hip pain). In a real version this would route to a verified model pipeline." ;
+    }
+    log.appendChild(botMsg);
+    log.scrollTop = log.scrollHeight;
+    input.value = '';
+  }
+  function handleUpload(input){
+    const status = document.getElementById('uploadStatus');
+    const log = document.getElementById('chatLog');
+    if(input.files && input.files[0]){
+      const name = input.files[0].name;
+      status.textContent = 'Attached: ' + name;
+      const note = document.createElement('div');
+      note.className = 'msg bot';
+      note.innerHTML = 'Received <strong>' + name + '</strong> (demo only — file contents are not actually parsed in this mockup). In a live build this would be scanned for relevant context before answering.';
+      log.appendChild(note);
+      log.scrollTop = log.scrollHeight;
+    }
+  }
+
+  function downloadReport(){
+    const log = document.getElementById('chatLog');
+    const lines = Array.from(log.querySelectorAll('.msg')).map(m=>{
+      const who = m.classList.contains('user') ? 'Staff' : 'Nanoprompter';
+      return who + ': ' + m.innerText.trim();
+    });
+    const content = 'Nanoprompter — AI Intelligence Report\nGenerated: ' + new Date().toLocaleString() + '\n\n' + lines.join('\n\n');
+    const blob = new Blob([content], {type:'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'nanoprompter-report.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  document.getElementById('chatInput').addEventListener('keydown', e=>{
+    if(e.key==='Enter') sendChat();
+  });
+</script>
+
+</body>
+</html>
